@@ -4,7 +4,7 @@ from schdule import CustomBaseSheduler
 from controlagent import *
 
 from mesa.datacollection import DataCollector  #Data collector
-from mesa.space import SingleGrid
+from mesa.space import MultiGrid, SingleGrid
 
 class ConceptModel(Model):
    
@@ -21,23 +21,31 @@ class ConceptModel(Model):
 
         self.schedule = CustomBaseSheduler(self)
 
-        self.grid = SingleGrid(width, height, torus=True)
+        self.grid = MultiGrid(width, height, torus=True)
         self.grid_positions = grid_positions
+        
+        for id,cord in {'CA':(1,1)}.items():           # weather agent ''' Add two weather agents'''
+            agent = Charging_Control_Agent(id,self)
+            self.schedule.add(agent)
+            self.grid.place_agent(agent, (cord[0], cord[1]))    # x : cord[0] , y: cord[1]
         
         for id,cord in {'ws1':(2,9) , 'ws2': (3,10)}.items():           # weather agent ''' Add two weather agents'''
             weatherAgent = WeatherAgent(id,self)
             self.schedule.add(weatherAgent)
-            self.grid.position_agent(weatherAgent, cord[0], cord[1])    # x : cord[0] , y: cord[1]
+            self.grid.place_agent(weatherAgent, (cord[0], cord[1]))    # x : cord[0] , y: cord[1]
 
         for id,cord in {'1A':(5,10) , '1B': (5,9)}.items():             # EV agent     ''' Add two ev agents'''
             ev_agent = EV_Agent(id,self)
             self.schedule.add(ev_agent)
-            self.grid.position_agent(ev_agent, cord[0], cord[1])        # solar agent    ''' Add one solar agent''' 
+            self.grid.place_agent(ev_agent, (cord[0], cord[1]))        # solar agent    ''' Add one solar agent''' 
 
-        for id,cord in {'Solar1':(1,18)}.items():               
-            solarPanelAgent = SolarPanelAgent(id,self)
+        for id,cord in {'1':(1,18)}.items():               
+            solarPanelAgent = SolarPanelAgent(f'Solar{id}',self)
+            weatherAgent = WeatherAgent(f'Weather{id}',self)
             self.schedule.add(solarPanelAgent)
-            self.grid.position_agent(solarPanelAgent, cord[0], cord[1])   
+            self.schedule.add(weatherAgent)
+            self.grid.place_agent(solarPanelAgent, (cord[0], cord[1]))   
+            self.grid.place_agent(weatherAgent, (cord[0], cord[1])) 
 
          
 

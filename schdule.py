@@ -2,6 +2,8 @@
 # from typing import Dict
 from mesa.time import BaseScheduler
 
+from controlagent import *
+
 class CustomBaseSheduler(BaseScheduler):
     def __init__(self,model):
         super().__init__(model)
@@ -18,10 +20,8 @@ class CustomBaseSheduler(BaseScheduler):
         if agent_class in  self.agents_dict.keys():
             if agent_id in self.agents_dict[agent_class].keys():
                 raise Exception(
-                    "Agent with unique id {0} already added to scheduler".format(
-                    repr(agent.unique_id)
+                    "Agent with unique id {0} already added to scheduler".format(repr(agent.unique_id))
                 )
-            )
             else:
                 self.agents_dict[agent_class][agent_id] = agent
         else :
@@ -37,7 +37,13 @@ class CustomBaseSheduler(BaseScheduler):
     def getAllAgentsList(self,agent):
         agent_class = type(agent).__name__
         return self.agents_dict[agent_class].values()
-        
+
+    def getAllAgentsListByClass(self,agent_class):
+        return self.agents_dict[agent_class.__name__].values()
+
+    def getAllAgentsinGrid(self):
+        return self.agents_dict
+
     def collectData(self, agent, param):
         agent_class = type(agent).__name__
         agent_id = agent.unique_id
@@ -45,20 +51,20 @@ class CustomBaseSheduler(BaseScheduler):
         return getattr(thisAgent,param)
 
     def add_reporter_params(self,agent, unique_id):
-        agent_class = type(agent).__name__
+        agent_class = type(agent)
 
-        if agent_class == 'EV_Agent': 
-            self.model.reporter_params[f'{unique_id} : Actual Speed (km/h)'] = lambda m: m.schedule.collectData(agent,'actual_speed')
+        if agent_class == EV_Agent: 
+            self.model.reporter_params[f'{unique_id} : Actual Speed (km/h)'] = lambda m: m.schedule.collectData(agent,'speed')
             self.model.reporter_params[f'{unique_id} : Availability'] = lambda m: m.schedule.collectData(agent,'availability')
 
-        elif agent_class == 'WeatherAgent': 
+        elif agent_class == WeatherAgent: 
             self.model.reporter_params[f'{unique_id} : Temperature (K)'] = lambda m: m.schedule.collectData(agent,'outdoorTemp')
             self.model.reporter_params[f'{unique_id} : Irradiance (W/m^2)'] = lambda m: m.schedule.collectData(agent,'outLight')
 
-        elif agent_class == 'SolarPanelAgent' : 
+        elif agent_class == SolarPanelAgent : 
             self.model.reporter_params[f'{unique_id} : Solar Power (W)'] = lambda m: m.schedule.collectData(agent,'energy_E')
 
-        elif agent_class == 'ControlchargingAgent' : 
+        elif agent_class == Charging_Control_Agent : 
             self.model.reporter_params[f'{unique_id} : SOC'] = lambda m: m.schedule.collectData(agent,'stateofcharge')
             # controlchargingAgent  :    stateofcharge, Control_value, powervalue,batterysoc 
             #  add these type and params
