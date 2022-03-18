@@ -8,7 +8,8 @@ Weather_Data = data('solardata','Sheet1',{'Temp' : float, 'Radiation':float})
 dataset  ={'CAR-1A': float, 'Acceleration-1A': float,'1A-available': float,'CAR-1B': float, 'Acceleration-1B': float,'1B-available': float}
 EV_Data = data('EVsample','EVsample',dataset)
 
-#_________________________________________________________________________________   Solar Panel Agent in FoE UoP _______________________________
+#_________________________________________________________________________________   Solar Panel Agent  _______________________________
+
 class SolarPanelAgent(Agent):
     def __init__(self,unique_id, model):
         super().__init__(unique_id, model)
@@ -21,21 +22,18 @@ class SolarPanelAgent(Agent):
         self.Tc = 298.15
         self.alpha = 0.0043
         
-        self.weatherAgent = WeatherAgent(f'Weather_data : {unique_id}',model)
-        model.schedule.add(self.weatherAgent)
-        self.energy_E = self.calculateSolarEnergy()
-
     def calculateSolarEnergy(self):
 
-        G = self.weatherAgent.getOutdoorLight()
-        T = self.weatherAgent.getOutdoorTemp()
+        cellmates = self.model.grid.get_cell_list_contents ([self.pos])
+        weatherAgent = cellmates[1]
+
+        G = weatherAgent.getOutdoorLight()
+        T = weatherAgent.getOutdoorTemp()
         
         return 220*(G*self.Tow*self.neeta*self.A*(1 - self.alpha*(T-self.Tc )))
 
     def step(self):
-
         self.energy_E = self.calculateSolarEnergy()
-        self.weatherAgent.step()
   
 #_________________________________________________________________________________  WEATHER _______________________________
 
@@ -46,8 +44,6 @@ class WeatherAgent(Agent): # weather condition, outdoor temperature,solar irradi
         
         self.outdoorTempList = Weather_Data['Temp']
         self.outLightList = Weather_Data['Radiation']
-        self.outdoorTemp = self.getOutdoorLight()
-        self.outLight =self.getOutdoorTemp()
      
     def getOutdoorTemp(self):
         return  self.outdoorTempList[self.model.schedule.steps]
@@ -72,18 +68,15 @@ class EV_Agent(Agent):
         self.actual_speed_list= EV_Data[f'CAR-{unique_id}']
         self.accleration_list = EV_Data[f'Acceleration-{unique_id}']
         self.availability_list = EV_Data[f'{unique_id}-available']
+        self.availability = 0
 
-        self.actual_speed = self.Get_Act_speed()
-        self.accleration = self.Accleration()
-        self.availability = self.Availability()
-
-    def Accleration(self):
+    def getAccleration(self):
         return  self.accleration_list[self.model.schedule.steps]
         
-    def Availability(self):
+    def getAvailability(self):
         return self.availability_list[self.model.schedule.steps]
         
-    def Get_Act_speed(self):
+    def getSpeed(self):
         return self.actual_speed_list[self.model.schedule.steps]     
 
 
@@ -204,13 +197,16 @@ class EV_Agent(Agent):
            
     def step(self):
      
-        self.actual_speed = self.Get_Act_speed()
-        self.accleration = self.Accleration()
-        self.availability  = self.Availability()
+        self.speed = self.getSpeed()
+        self.accleration = self.getAccleration()
+        self.availability  = self.getAvailability()
         # self.ResistanceForce = self.Resistance_Force()
         # self.Powerconsumed = self.Power()
         # self.stateofcharge = self.carSOC()
-           
+
+
+#_________________________________________________________________________________  Utility_Grid  _______________________________
+
 class Utility_Grid(Agent):
 
     def __init__(self,unique_id, model):
@@ -219,7 +215,9 @@ class Utility_Grid(Agent):
 
     def step(self):
         pass
-         
+
+#_________________________________________________________________________________  Battery_Storage  _______________________________
+      
 class Battery_Storage(Agent):
 
     def __init__(self,unique_id, model):
@@ -234,6 +232,8 @@ class Battery_Storage(Agent):
         
     def step(self):
         pass
+
+#_________________________________________________________________________________  Charge_pole  _______________________________
 
 class Charge_pole(Agent):
  

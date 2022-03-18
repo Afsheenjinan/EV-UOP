@@ -23,17 +23,20 @@ def visual_portrayal(agent):
     }
 
     if type(agent) is SolarPanelAgent:
+        # portrayal["Shape"] = "resources/solar.jpg"
         portrayal["Shape"] = "resources/solar.jpg"
+        portrayal["Layer"] = 1
         
     elif type(agent) is WeatherAgent:
 
         portrayal["Shape"] = "resources/temp.png"
                  
     elif type(agent) is EV_Agent:
-        if agent.availability :
+        if agent.getAvailability() :
             portrayal["Shape"] = "resources/car.png"
         else :
-            portrayal.update({"Shape": "circle", "Color":"white", "Filled": "true", "r": 0.5})
+            # portrayal.update({"Shape": "circle", "Color":"white", "Filled": "true", "r": 0.5})
+            portrayal = {"Shape": "circle", "Color":"white", "Layer" : 0, "Filled": "true", "r": 0.5}
 
     elif type(agent) is Charge_pole:
         portrayal["Shape"] = "resources/pole.jpg"
